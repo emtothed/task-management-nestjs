@@ -18,17 +18,29 @@ import { Task } from './task.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from 'src/auth/user.entity';
 import { GetUser } from 'src/auth/get-user.decorator';
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('tasks')
 @UseGuards(AuthGuard())
 export class TasksController {
-  constructor(private tasksService: TasksService) {}
+  private logger = new Logger('TasksController');
+
+  constructor(
+    private tasksService: TasksService,
+    private configService: ConfigService, // for using #env
+  ) {
+    //  console.log(configService.get('TEST_VALUE')); // getting TEST_VALUE from .env file
+  }
 
   @Get()
   getTasks(
     @Query() filterDto: getTasksFilterDto,
     @GetUser() user: User,
   ): Promise<Task[]> {
+    this.logger.verbose(
+      `User ${user.username} retrieving all tasks. Filters: ${JSON.stringify(filterDto)}`,
+    );
     return this.tasksService.getTasks(filterDto, user);
   }
 
@@ -45,6 +57,9 @@ export class TasksController {
     @Body() createTaskDto: CreateTaskDto,
     @GetUser() user: User, // our parameter decorator that gets the user from the jwt
   ): Promise<Task> {
+    this.logger.verbose(
+      ` User ${user.username} creating a new task. Data : ${JSON.stringify(createTaskDto)}`,
+    );
     return this.tasksService.createTask(createTaskDto, user);
   }
 
